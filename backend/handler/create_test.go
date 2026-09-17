@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -15,6 +16,7 @@ import (
 	"github.com/openshift/faas-console-plugin/backend/functions"
 	"github.com/openshift/faas-console-plugin/backend/scm"
 	authenticationv1 "k8s.io/api/authentication/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("POST /api/v1/func/create", func() {
@@ -81,7 +83,10 @@ var _ = Describe("POST /api/v1/func/create", func() {
 		withClusterStub(&cluster.ClientStub{
 			OnRequestToken: func(ctx context.Context, namespace string, saTokenExpiry int64) (*authenticationv1.TokenRequestStatus, error) {
 				requestedExpiry = saTokenExpiry
-				return &authenticationv1.TokenRequestStatus{Token: "stub-token"}, nil
+				return &authenticationv1.TokenRequestStatus{
+					Token:               "stub-token",
+					ExpirationTimestamp: metav1.NewTime(time.Now().Add(time.Duration(saTokenExpiry) * time.Second)),
+				}, nil
 			},
 		})
 		h, err := New("", "", "https://api.test-cluster.example.com:6443", 7*24*60*60)

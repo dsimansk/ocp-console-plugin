@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/openshift/faas-console-plugin/backend/kube"
 	authenticationv1 "k8s.io/api/authentication/v1"
@@ -232,7 +233,10 @@ func (s *ClientStub) RequestToken(ctx context.Context, namespace string, saToken
 	if s.OnRequestToken != nil {
 		return s.OnRequestToken(ctx, namespace, saTokenExpiry)
 	}
-	return &authenticationv1.TokenRequestStatus{Token: "stub-token"}, nil
+	return &authenticationv1.TokenRequestStatus{
+		Token:               "stub-token",
+		ExpirationTimestamp: metav1.NewTime(time.Now().Add(time.Duration(saTokenExpiry) * time.Second)),
+	}, nil
 }
 
 func (s *ClientStub) DeleteServiceAccount(ctx context.Context, namespace string) error {
